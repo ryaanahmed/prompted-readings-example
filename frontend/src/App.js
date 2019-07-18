@@ -1,26 +1,6 @@
 import React from 'react';
 
 
-const story = {
-    id: 0,
-    text: 'Baby shoes; never worn.',
-    contexts: [
-        'This is an ad:',
-        'This is actually a short story:',
-    ],
-    questions: [
-        {
-            text: 'In one word: how does the ad make you feel?',
-            wordLimit: 1,
-        },
-        {
-            text: 'In three words or less: what is the ad about?',
-            wordLimit: 3,
-        },
-    ],
-};
-
-
 function Button(props) {
     return (
         <button onClick={() => props.onClick()}>
@@ -42,11 +22,17 @@ class App extends React.Component {
         };
     }
 
-    componentDidMount() {
-        // TODO: get this via request to the server
-        this.setState({
-            story,
-        });
+    async componentDidMount() {
+        try {
+            const url = 'http://localhost:8000/readings/story/1';
+            const res = await fetch(url);
+            const story = await res.json();
+            this.setState({
+                story
+            });
+        } catch (e) {
+          alert(e);
+        }
     }
 
     handleClick() {
@@ -70,7 +56,6 @@ class App extends React.Component {
                     responses: responses.concat([response]),
                     textInput: '',
                 })
-
             }
         }
 
@@ -85,6 +70,7 @@ class App extends React.Component {
                 if (contextNum < this.state.story.contexts.length - 1) {
                     contextNum += 1;
                 } else {
+                    // TODO(ra): send responses back to the server
                     contextNum = -2;
                     questionNum = -2;
                 }
@@ -114,20 +100,28 @@ class App extends React.Component {
         const questionNum = this.state.questionNum;
         const contextNum = this.state.contextNum;
 
-        let btnText;
-        if (questionNum === -1 && contextNum === -1) {
-            btnText = 'Start';
-        } else {
-            btnText = 'Continue';
-        }
-
-        let buttonOrThanks;
+        let buttonOrResponses;
         if (contextNum === -2) {
-            buttonOrThanks = (
-                <div>Thank you for participating!</div>
+            const responseList = this.state.responses.map((response, i) => 
+                <li key={i}>{response.text}</li>
             );
+
+            buttonOrResponses = (
+                <div>
+                Thank you for participating! Your responses were: 
+                <ul>{responseList}</ul>
+                </div>
+            );
+
         } else {
-            buttonOrThanks = (
+            let btnText;
+            if (questionNum === -1 && contextNum === -1) {
+                btnText = 'Start';
+            } else {
+                btnText = 'Continue';
+            }
+
+            buttonOrResponses = (
                 <div>
                     <Button onClick={() => this.handleClick()} text={btnText} />
                 </div>
@@ -158,7 +152,7 @@ class App extends React.Component {
                     </div>
                 }
 
-                { buttonOrThanks }
+                { buttonOrResponses }
 
             </div>
         );
